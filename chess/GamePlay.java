@@ -26,7 +26,8 @@ public class GamePlay {
     private JLabel[][] hEdge, vEdge, box;
     private boolean[][] isSetHEdge, isSetVEdge;
 
-    private Deque<Edge> match = new LinkedList<Edge>();
+    private Deque<Edge> match = new LinkedList<Edge>();//记录棋盘
+    private Deque<Integer> solverDeque = new LinkedList<Integer>();//记录轮流次序
 
     private JFrame frame;
     private JLabel redScoreLabel, blueScoreLabel, statusLabel;
@@ -34,10 +35,12 @@ public class GamePlay {
     private MouseListener mouseListener = new MouseListener() {//监听 鼠标事件
         @Override
         public void mouseClicked(MouseEvent mouseEvent) {
+            solverDeque.add(turn);
             if(!mouseEnabled) return;
             Edge copy = getSource(mouseEvent.getSource());
             processMove(copy);
             match.offer(copy);
+
         }
 
         @Override
@@ -87,13 +90,13 @@ public class GamePlay {
         if(location.isHorizontal()) {
             if(isSetHEdge[x][y]) return;
             ret = board.setHEdge(x,y,turn);
-            hEdge[x][y].setBackground(Color.BLACK);
+            hEdge[x][y].setBackground((turn == Board.RED ? Color.RED : Color.blue));
             isSetHEdge[x][y] = true;
         }
         else {
             if(isSetVEdge[x][y]) return;
             ret = board.setVEdge(x,y,turn);
-            vEdge[x][y].setBackground(Color.BLACK);
+            vEdge[x][y].setBackground((turn == Board.RED ? Color.RED : Color.blue));
             isSetVEdge[x][y] = true;
         }
 
@@ -144,7 +147,10 @@ public class GamePlay {
             }
             else {
                 mouseEnabled = false;
-                processMove(solver.getNextMove(board, turn));
+                Edge process = solver.getNextMove(board, turn);
+                processMove(process);
+                match.add(process);
+                solverDeque.add(turn);
             }
             try {
                 Thread.sleep(100);
@@ -228,9 +234,40 @@ public class GamePlay {
     private ActionListener repentanceListenner = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
+            ArrayList<Point> ret;
+            if(solverDeque.isEmpty())return;
+            int player = solverDeque.pollLast();
             Edge copy = match.pollLast();
-
+            int x = copy.getX();
+            int y = copy.getY();
+            if (copy.isHorizontal()) {
+                ret = board.setPrecedeStatus(copy,player);
+                hEdge[x][y].setBackground(Color.white);
+                isSetHEdge[x][y] = false;
+            } else {
+                ret = board.setPrecedeStatus(copy, player);
+                vEdge[x][y].setBackground(Color.white);
+                isSetVEdge[x][y] = false;
+            }
+            for (Point p : ret) {
+                box[p.x][p.y].setBackground(Color.white);
+            }
+            redScoreLabel.setText(String.valueOf(board.getRedScore()));
+            blueScoreLabel.setText(String.valueOf(board.getBlueScore()));
+            if(player == Board.RED) {
+                solver = redSolver;
+                turn = player;
+                statusLabel.setText("Player-1的回合...");
+                statusLabel.setForeground(Color.red);
+            }
+            else {
+                turn = player;
+                solver = blueSolver;
+                statusLabel.setText("Player-2的回合...");
+                statusLabel.setForeground(Color.BLUE);
+            }
         }
+
     };
 
     private void initGame() {//画界面以及棋盘

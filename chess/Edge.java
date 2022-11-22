@@ -14,7 +14,7 @@ public class Edge {//边
         this.horizontal = horizontal;
     }
 
-    public boolean isHorizontal() {
+    public boolean isHorizontal() {//horizontal 水平的
         return horizontal;
     }
 

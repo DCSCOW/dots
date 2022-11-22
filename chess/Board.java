@@ -86,11 +86,11 @@ public class Board implements Cloneable {
         return ret;
     }
 
-    public ArrayList<Point> setHEdge(int x, int y, int color) {//成盒的条件(走的是纵边)
+    public ArrayList<Point> setHEdge(int x, int y, int color) {//成盒的条件(走的是横边)
         hEdge[x][y]=BLACK;
         ArrayList<Point> ret = new ArrayList<Point>();
         if(y<(n-1) && vEdge[x][y]==BLACK && vEdge[x+1][y]==BLACK && hEdge[x][y+1]==BLACK) {
-            //(x,y)这条纵边的右上方的横边，右下角的横边以及右边的纵边
+            //(x,y)这条横边的右上方的横边，右下角的横边以及右边的纵边
             box[x][y]=color;
             ret.add(new Point(x,y));
             if(color == RED) redScore++;
@@ -106,7 +106,7 @@ public class Board implements Cloneable {
         return ret;
     }
 
-    public ArrayList<Point> setVEdge(int x, int y, int color) {//成盒的条件(走的是横边)
+    public ArrayList<Point> setVEdge(int x, int y, int color) {//成盒的条件(走的是纵边)
         vEdge[x][y]=BLACK;
         ArrayList<Point> ret = new ArrayList<Point>();
         if(x<(n-1) && hEdge[x][y]==BLACK && hEdge[x][y+1]==BLACK && vEdge[x+1][y]==BLACK) {
@@ -123,6 +123,44 @@ public class Board implements Cloneable {
         }
         return ret;
     }
+
+    public ArrayList<Point> setPrecedeStatus(Edge edge, int color){
+        int x = edge.getX(),y=edge.getY();
+        ArrayList<Point> ret = new ArrayList<Point>();
+        if(edge.isHorizontal()){
+            if(y<(n-1) && vEdge[x][y]==BLACK && vEdge[x+1][y]==BLACK && hEdge[x][y+1]==BLACK) {
+                box[x][y]=BLANK;
+                ret.add(new Point(x,y));
+                if(color == RED) redScore--;
+                else blueScore--;
+            }
+            if(y>0 && vEdge[x][y-1]==BLACK && vEdge[x+1][y-1]==BLACK && hEdge[x][y-1]==BLACK) {
+                //(x,y)这条纵边的左上角的横边，左下角的横边以及坐边的纵边
+                box[x][y-1]=BLANK;
+                ret.add(new Point(x,y-1));
+                if(color == RED) redScore--;
+                else blueScore--;
+            }
+            hEdge[x][y]=BLANK;
+        }
+        else{
+            if(x<(n-1) && hEdge[x][y]==BLACK && hEdge[x][y+1]==BLACK && vEdge[x+1][y]==BLACK) {
+                box[x][y]=BLANK;
+                ret.add(new Point(x,y));
+                if(color == RED) redScore--;
+                else blueScore--;
+            }
+            if(x>0 && hEdge[x-1][y]==BLACK && hEdge[x-1][y+1]==BLACK && vEdge[x-1][y]==BLACK) {
+                box[x-1][y]=BLANK;
+                ret.add(new Point(x-1,y));
+                if(color == RED) redScore--;
+                else blueScore--;
+            }
+            vEdge[x][y]=BLANK;
+        }
+        return ret;
+    }
+
 
     public boolean isComplete() {//游戏完成的条件
         return (redScore + blueScore) == (n - 1) * (n - 1);
@@ -162,4 +200,12 @@ public class Board implements Cloneable {
         return count;
     }
 
+    public Board getALLNewBoard( Board board,Edge edge, int color) {
+        Board ret = board;
+        if(edge.isHorizontal())
+            ret.setHEdge(edge.getX(), edge.getY(), color);
+        else
+            ret.setVEdge(edge.getX(), edge.getY(), color);
+        return ret;
+    }
 }
